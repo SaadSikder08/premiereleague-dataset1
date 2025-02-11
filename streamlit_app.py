@@ -7,8 +7,8 @@ import re
 
 # Streamlit page settings
 st.set_page_config(page_title="Premier League Table", page_icon="⚽")
-st.title("⚽ Premier League Table (2017-2025)")
-st.write("This app visualizes the Premier League table from 2010 to 2025. Yes its made by me")
+st.title("Premier League Table (2017-2025)")
+st.write("This app visualizes the Premier League table and predicts the likely winner! Do note that this takes into account point losses due to punishments, e.g Everton losing points due to a breach of the financial rules")
 
 # Function to load and combine all CSV files
 @st.cache_data
@@ -21,7 +21,7 @@ def load_data():
     for file in all_files:
         df = pd.read_csv(file)
 
-        # Extract year from filename safely
+        # Extract year from filename
         match = re.search(r'(\d{4})', file)
         year = int(match.group(1)) if match else 0  
 
@@ -61,32 +61,56 @@ teams = st.multiselect("Select Teams", distinct_teams, default=distinct_teams)
 df_filtered = df_filtered[df_filtered["team"].isin(teams)]
 
 # Aggregate total points per team in the selected range
-df_agg = df_filtered.groupby("team", as_index=False)["points"].sum()
+df_agg = df_filtered.groupby(["team", "year"], as_index=False)["points"].sum()
+
+# Add a weighted score column to emphasize recent years
+def calculate_weighted_scores(df):
+    current_year = df["year"].max()
+    df["weight"] = df["year"].apply(lambda y: 1 + (y - 2017) * 0.15)  # More recent years have higher weight
+    df["weighted_points"] = df["points"] * df["weight"]
+    return df
+
+df_agg = calculate_weighted_scores(df_agg)
+
+# Aggregate total weighted points per team
+df_final = df_agg.groupby("team", as_index=False).agg(
+    total_points=("points", "sum"),
+    weighted_points=("weighted_points", "sum")
+)
+
+# Predict the winner based on weighted points
+if not df_final.empty:
+    predicted_winner = df_final.sort_values(by="weighted_points", ascending=False).iloc[0]["team"]
+else:
+    predicted_winner = None
 
 # Display filtered data
 st.dataframe(df_filtered, use_container_width=True)
 
 # Show as a bar chart
-if not df_agg.empty:
+if not df_final.empty:
     chart = (
-        alt.Chart(df_agg)
+        alt.Chart(df_final)
         .mark_bar()
         .encode(
-            x=alt.X("team:N", title="Team", sort="-y"),  # Sort by points descending
-            y=alt.Y("points:Q", title="Total Points"),
+            x=alt.X("team:N", title="Team", sort="-y"),
+            y=alt.Y("weighted_points:Q", title="Weighted Total Points"),
             color=alt.Color("team:N", legend=None),
-            tooltip=["team", "points"]
+            tooltip=["team", "total_points", "weighted_points"]
         )
         .properties(height=400)
     )
 
-    # Add text labels to bars
     text = chart.mark_text(
         align="center",
         baseline="bottom",
-        dy=-5  # Position labels above bars
-    ).encode(text="points:Q")
+        dy=-5
+    ).encode(text="weighted_points:Q")
 
     st.altair_chart(chart + text, use_container_width=True)
+
+    # Display AI-Free Prediction
+    st.subheader("Prediction")
+    st.success(f"Based on recent trends, the predicted winner is **{predicted_winner}**!")
 else:
     st.warning("No data available for the selected filters. Please check if data for the selected years exists.")
