@@ -1,18 +1,11 @@
-# 🎬 Movies dataset template
+# An app that uses weighted points from the Premier League to calculate who has the best odds of winning the 2025 Premier League. 
 
-A simple Streamlit app showing movie data from [The Movie Database (TMDB)](https://www.kaggle.com/datasets/tmdb/tmdb-movie-metadata). 
-
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://movies-dataset-template.streamlit.app/)
 
 ### How to run it on your own machine
 
-1. Install the requirements
+1. Install the required libraries, most likely just the Streamlit library. 
 
-   ```
-   $ pip install -r requirements.txt
-   ```
-
-2. Run the app
+2. Run the app and run the bash command it gives you and then right click on any of the links it gives you in the terminal 
 
    ```
    $ streamlit run streamlit_app.py
