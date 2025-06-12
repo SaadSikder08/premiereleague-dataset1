@@ -8,7 +8,7 @@ import re
 # Streamlit page settings
 st.set_page_config(page_title="Premier League Table", page_icon="⚽")
 st.title("Premier League Table (2017-2025)")
-st.write("This app visualizes the Premier League table and predicts the likely winner! Do note that this takes into account point losses due to punishments, e.g Everton losing points due to a breach of the financial rules")
+st.write("This app visualises the Premier League table and predicts the likely winner. Do note that this takes into account point losses due to punishments, e.g Everton losing points due to a breach of the financial rules")
 
 # Function to load and combine all CSV files
 @st.cache_data
